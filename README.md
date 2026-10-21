@@ -32,6 +32,8 @@ Data is never committed. The bullet bank, panel scores, synthetic sets and train
 | `convert_decision.py` | Both models into one GGUF (numpy only). |
 | `decide_reference.py` | PyTorch outputs for 20 fixed inputs. |
 | `check_decision.py` | Runs the GGUF in plain numpy and compares it with the reference. |
+| `cascade_check.py`, `cascade_eval.py` | How often the small model agrees with the medium one, and the cascade on held-out items. |
+| `run_export.ps1` | Builds the shipped GGUF, the reference and the checks. |
 
 `MODEL_CARD.md` describes the shipped file.
 

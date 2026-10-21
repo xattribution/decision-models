@@ -366,8 +366,10 @@ def distill(a):
 
 
 def agree(so, to):
-    """The small model agrees when every score is within 0.5 of the medium one and the gate matches."""
-    d = (so["score"][:, :11] - to["score"][:, :11]).abs().max(1)
+    """The small model agrees when its overall score is within 0.5 of the medium one's and the gate matches.
+    (Requiring all 11 scores within 0.5 held for only a third of items, and no signal could pick them.)"""
+    ov = M.SCORES.index("overall")
+    d = (so["score"][:, ov] - to["score"][:, ov]).abs()
     return (d <= 0.5) & (so["gate"].argmax(1) == to["gate"].argmax(1))
 
 
@@ -427,7 +429,7 @@ def calibrate(T, teacher, cal, a):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("mode", choices=["teach", "direct", "distill", "eval"])
+    ap.add_argument("mode", choices=["teach", "direct", "distill", "calibrate", "eval"])
     ap.add_argument("--base", default="jhu-clsp/ettin-encoder-400m")
     ap.add_argument("--name", default="m400")
     ap.add_argument("--teacher", default="")
@@ -447,7 +449,15 @@ def main():
         evaluate(m, tok, name)
         evaluate(m, tok, name, expand=True)
         return
-    if a.mode == "distill":
+    if a.mode == "calibrate":
+        # rerun only the cascade step on a distilled student (--ckpt work/multi/NAME_nocal.pt)
+        T = Trainer(a)
+        T.model.load_state_dict(torch.load(a.ckpt, map_location="cuda"))
+        teacher, _ = load_model(a.teacher)
+        for p in teacher.parameters():
+            p.requires_grad_(False)
+        calibrate(T, teacher, bank_texts()[1], a)
+    elif a.mode == "distill":
         distill(a)
     else:
         T = Trainer(a)

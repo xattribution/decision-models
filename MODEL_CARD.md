@@ -2,7 +2,7 @@
 
 Quartermaster's local decision models. They grade Air Force and Space Force evaluation, award and decoration statements on the user's computer. They return scores, never text.
 
-_Numbers below are filled in from `work/multi/results.jsonl` and `extra.jsonl` when a release is built._
+Build of 21 Oct 26: `qm-decide-Q8_0.gguf`, 495.7 MB, SHA-256 `2097466b05a63944178a5519ef4081484658bc9888adfe9a38ec8fae1f2d9565`.
 
 ## What's in the file
 
@@ -21,7 +21,34 @@ Outputs, for each statement:
 - **type**: bullet, narrative, citation, push or strat.
 - **spans**: B/I tags on each token for action, impact and result (one layer, never overlapping), plus scope and numbers (a layer each; they may sit inside the others).
 - **embed**: 256 numbers of unit length. Statements that say the same thing sit close, including a clipped line and its spelled-out copy.
-- **conf** (small only): the chance the small model agrees with the medium one. Agreement means every score is within 0.5 and the gate matches.
+- **conf** (small only): the chance the small model agrees with the medium one. Agreement means the overall score is within 0.5 and the gate matches. The medium model's conf head is untrained; ignore it.
+
+## Results
+
+Spearman rho against the panel key. "Val" is 1,505 bullets from afbulletsafe.com, a source no model trained on. "Old test" is the 233 round 4 items.
+
+| | small (68M, distilled) | medium (400M) | cascade | 68M trained directly |
+|---|---|---|---|---|
+| Structure, val | 0.786 | 0.800 | 0.790 | 0.760 |
+| Content (mean of 6), val | 0.905 | 0.919 | 0.911 | 0.883 |
+| Impact, val | 0.836 | 0.851 | 0.846 | 0.812 |
+| Overall, val | 0.844 | 0.868 | 0.856 | 0.801 |
+| Gate accuracy, val | 0.912 | 0.913 | 0.912 | 0.903 |
+| Structure, old test | 0.874 | 0.886 | 0.878 | 0.859 |
+| Overall, old test | 0.859 | 0.860 | 0.858 | 0.822 |
+| Maintainer's pair picks | 62/84 | 61/84 | | 61/84 |
+| Brown Bag level (16 lines) | 0.668 | 0.777 | | 0.569 |
+| int8, 4 CPU threads, 40 / 128 tokens | 8.7 / 15.3 ms | 22.9 / 49.1 ms | | |
+
+What these mean:
+
+- The two panel scorers agree with each other on val at 0.807 for structure and 0.942 for content, so the medium model is close to the key's own ceiling on structure.
+- Spelling abbreviations out changes no score's rho by more than 0.02, except clipping, which is meant to drop.
+- The cascade threshold is 0.865. At that point the small model answers 79% of bank items and agrees with the medium model on 95% of them. On val it answers 65%.
+- Speed was measured on the training desktop's CPU with PyTorch's int8, not on a laptop or in the Go engine.
+- Spans, exact-match F1 for the medium model on val: action 0.78, impact 0.63, result 0.63, scope 0.56, numbers 0.90. Exact match is strict: a piece one word short counts as a miss.
+- Same-meaning pairs held out (314): the right partner is the nearest one 97% of the time for medium and 94% for small.
+- Of the maintainer's 16 long-versus-short picks, the models matched 8. The maintainer prefers a short form-fit bullet over a long prose statement. The rubric doesn't score length, so code that checks fit against the form should decide this.
 
 ## How to run it
 
@@ -52,6 +79,6 @@ Source weights used when the small model learns from the medium one:
 ## Known limits
 
 - The key comes from two model scorers. On the validation source they agree on structure at rho 0.807, so no model can be judged much above that there.
-- Narrative statements were learned mostly from Opera's generated narratives. Check the real-narrative test numbers before relying on the type head for Air Force narrative forms.
+- Narrative statements were learned mostly from Opera's generated narratives. Many statements the bank labels as narrative performance statements are really old one-line bullets ending in a period. The models call most of those bullets, so the type head's narrative test score (59% medium, 76% small) understates it.
 - Opera's text has its slashes stripped. Repair it before using that source as examples shown to users.
 - Scores track the panel's rubric. A unit's own rules (banned words, form limits) are code and data, not the model.
