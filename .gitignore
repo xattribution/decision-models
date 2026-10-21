@@ -1,0 +1,22 @@
+# Data and outputs never go in this repo.
+data/
+data_new/
+work/
+logs/
+scoring/
+export/
+.venv/
+__pycache__/
+synth/seeds/
+synth/out/
+synth/out_old/
+synth/arb/
+panel/r*/
+*.parquet
+*.jsonl
+*.csv
+*.tsv
+*.zip
+*.gguf
+*.safetensors
+*.pt
