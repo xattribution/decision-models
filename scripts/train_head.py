@@ -93,6 +93,7 @@ def main():
     ap.add_argument("--sets", default="", help="comma-separated synthetic sets (default: the dimension's ladder set)")
     ap.add_argument("--tag", default="", help="label added to the arm in results")
     ap.add_argument("--real", default="r4", help="panel round whose key supplies real labels (r4 or r5)")
+    ap.add_argument("--norm", action="store_true", help="strip a leading dash or bullet mark and extra spaces before encoding")
     ap.add_argument("--base", default="jhu-clsp/ettin-encoder-68m")
     ap.add_argument("--epochs", type=int, default=3)
     ap.add_argument("--bs", type=int, default=32)
@@ -103,7 +104,10 @@ def main():
     dev = "cuda"
     tok = AutoTokenizer.from_pretrained(a.base)
     model = Head(a.base).to(dev)
-    enc = lambda xs: tok(xs, padding=True, truncation=True, max_length=96, return_tensors="pt").to(dev)
+    import re
+    lead = re.compile(r"^\s*[-•*–—]+\s*")
+    norm = (lambda s: lead.sub("", " ".join(s.split()))) if a.norm else (lambda s: s)
+    enc = lambda xs: tok([norm(x) for x in xs], padding=True, truncation=True, max_length=96, return_tensors="pt").to(dev)
 
     tr, te = real_rows(a.dim, a.real)
     te2 = real_rows(a.dim, "r4")[1] if a.real != "r4" else []   # the old 233-bullet test, for comparison

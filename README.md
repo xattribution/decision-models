@@ -23,6 +23,17 @@ Data is never committed. The bullet bank, panel scores, synthetic sets and train
 | `nm_check.py`, `synth_stats.py` | Check a synthetic set for shortcuts (length, shorthand, separators by level). |
 | `train_head.py` | Trains one score head on an Ettin encoder and tests it on held-out real bullets. |
 | `baselines.py DIM` | Simple-rule baseline and the scorer-to-scorer ceiling for one dimension. |
+| `gap_check.py DIM` | Scorer agreement, text shape and model error by source, for a dimension that falls short. |
+| `spans.py batches/check/collect` | Batches for marking action, impact, result, scope and numbers; checks every piece against the text. |
+| `multi_data.py` | Data for the multi-head model: the text rule, the key, types, spans, same-meaning pairs, the abbreviation expander. |
+| `train_multi.py teach/direct/distill/eval` | The multi-head model: 400M teacher, 68M direct or distilled, and the cascade threshold. |
+| `eval_extra.py` | The maintainer's pair picks, Brown Bag levels and int8 speed on 4 CPU threads. |
+| `export_st.py` | A checkpoint as safetensors with its configs, for the converter. |
+| `convert_decision.py` | Both models into one GGUF (numpy only). |
+| `decide_reference.py` | PyTorch outputs for 20 fixed inputs. |
+| `check_decision.py` | Runs the GGUF in plain numpy and compares it with the reference. |
+
+`MODEL_CARD.md` describes the shipped file.
 
 ## Running
 
